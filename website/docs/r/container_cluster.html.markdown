@@ -75,9 +75,13 @@ output "cluster_ca_certificate" {
     in `initial_node_count` should be created in. Only one of `zone` and `region`
     may be set. If neither zone nor region are set, the provider zone is used.
 
-* `region` (Optional, [Beta](/docs/providers/google/index.html#beta-features))
+* `region` (Optional)
     The region to create the cluster in, for
     [Regional Clusters](https://cloud.google.com/kubernetes-engine/docs/concepts/multi-zone-and-regional-clusters#regional).
+    In a Regional Cluster, the number of nodes specified in `initial_node_count` is 
+    created in three zones of the region (this can be changed by setting `additional_zones`).
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
 
 * `additional_zones` - (Optional) The list of additional Google Compute Engine
     locations in which the cluster's nodes should be located. If additional zones are
@@ -92,9 +96,19 @@ output "cluster_ca_certificate" {
 
 * `description` - (Optional) Description of the cluster.
 
+* `enable_binary_authorization` - (Optional) Enable Binary Authorization for this cluster.
+    If enabled, all container images will be validated by Google Binary Authorization.
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
+
 * `enable_kubernetes_alpha` - (Optional) Whether to enable Kubernetes Alpha features for
     this cluster. Note that when this option is enabled, the cluster cannot be upgraded
     and will be automatically deleted after 30 days.
+
+* `enable_tpu` - (Optional) Whether to enable Cloud TPU resources in this cluster.
+    See the [official documentation](https://cloud.google.com/tpu/docs/kubernetes-engine-setup).
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
 
 * `enable_legacy_abac` - (Optional) Whether the ABAC authorizer is enabled for this cluster.
     When enabled, identities in the system, including service accounts, nodes, and controllers,
@@ -122,9 +136,12 @@ output "cluster_ca_certificate" {
     for master authorized networks. Omit the nested `cidr_blocks` attribute to disallow
     external access (except the cluster node IPs, which GKE automatically whitelists).
 
-* `master_ipv4_cidr_block` - (Optional, [Beta](/docs/providers/google/index.html#beta-features)) Specifies a private
+* `master_ipv4_cidr_block` - (Optional, Deprecated) Specifies a private
     [RFC1918](https://tools.ietf.org/html/rfc1918) block for the master's VPC. The master range must not overlap with any subnet in your cluster's VPC.
     The master and your cluster use VPC peering. Must be specified in CIDR notation and must be `/28` subnet.
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
+    This field is deprecated, use `private_cluster_config.master_ipv4_cidr_block` instead.
 
 * `min_master_version` - (Optional) The minimum version of the master. GKE
     will auto-update the master to new versions, so this does not guarantee the
@@ -133,7 +150,7 @@ output "cluster_ca_certificate" {
     official release (which is not necessarily the latest version).
 
 * `monitoring_service` - (Optional) The monitoring service that the cluster
-    should write metrics to. 
+    should write metrics to.
     Automatically send metrics from pods in the cluster to the Google Cloud Monitoring API.
     VM metrics will be collected by Google Compute Engine regardless of this setting
     Available options include
@@ -158,19 +175,31 @@ output "cluster_ca_certificate" {
     or set to the same value as `min_master_version` on create. Defaults to the default
     version set by GKE which is not necessarily the latest version.
 
-* `pod_security_policy_config` - (Optional, [Beta](/docs/providers/google/index.html#beta-features)) Configuration for the
+* `pod_security_policy_config` - (Optional) Configuration for the
     [PodSecurityPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies) feature.
     Structure is documented below.
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
 
-* `private_cluster` - (Optional, [Beta](/docs/providers/google/index.html#beta-features)) If true, a
-    [private cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters) will be created, which makes
-    the master inaccessible from the public internet and nodes do not get public IP addresses either. It is mandatory to specify
-    `master_ipv4_cidr_block` and `ip_allocation_policy` with this option.
+* `private_cluster_config` - (Optional) A set of options for creating
+    a private cluster. Structure is documented below.
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
+
+* `private_cluster` - (Optional, Deprecated) If true, a
+    [private cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters) will be created, meaning
+    nodes do not get public IP addresses. It is mandatory to specify `master_ipv4_cidr_block` and 
+    `ip_allocation_policy` with this option.
+    This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
+    This field is deprecated, use `private_cluster_config.enable_private_nodes` instead.
 
 * `project` - (Optional) The ID of the project in which the resource belongs. If it
     is not provided, the provider project is used.
 
 * `remove_default_node_pool` - (Optional) If true, deletes the default node pool upon cluster creation.
+
+* `resource_labels` - (Optional) The GCE resource labels (a map of key/value pairs) to be applied to the cluster.
 
 * `subnetwork` - (Optional) The name or self_link of the Google Compute Engine subnetwork in
     which the cluster's instances are launched.
@@ -179,10 +208,10 @@ The `addons_config` block supports:
 
 * `horizontal_pod_autoscaling` - (Optional) The status of the Horizontal Pod Autoscaling
     addon, which increases or decreases the number of replica pods a replication controller
-    has based on the resource usage of the existing pods. 
+    has based on the resource usage of the existing pods.
     It ensures that a Heapster pod is running in the cluster, which is also used by the Cloud Monitoring service.
     It is enabled by default;
-    set `disabled = true` to disable. 
+    set `disabled = true` to disable.
 * `http_load_balancing` - (Optional) The status of the HTTP (L7) load balancing
     controller addon, which makes it easy to set up HTTP load balancers for services in a
     cluster. It is enabled by default; set `disabled = true` to disable.
@@ -233,6 +262,23 @@ The `ip_allocation_policy` block supports:
     ClusterIPs. This must be an existing secondary range associated with the cluster
     subnetwork.
 
+* `cluster_ipv4_cidr_block` - (Optional) The IP address range for the cluster pod IPs.
+    Set to blank to have a range chosen with the default size. Set to /netmask (e.g. /14)
+    to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.96.0.0/14)
+    from the RFC-1918 private networks (e.g. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to
+    pick a specific range to use.
+
+* `services_ipv4_cidr_block` - (Optional) The IP address range of the services IPs in this cluster.
+    Set to blank to have a range chosen with the default size. Set to /netmask (e.g. /14)
+    to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.96.0.0/14)
+    from the RFC-1918 private networks (e.g. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to
+    pick a specific range to use.
+
+* `create_subnetwork`- (Optional) Whether a new subnetwork will be created automatically for the cluster.
+
+* `subnetwork_name` - (Optional) A custom subnetwork name to be used if create_subnetwork is true.
+    If this field is empty, then an automatic name will be chosen for the new subnetwork.
+
 The `master_auth` block supports:
 
 * `password` - (Required) The password to use for HTTP basic authentication when accessing
@@ -256,7 +302,7 @@ This block also contains several computed attributes, documented below. If this 
 
 The `master_authorized_networks_config` block supports:
 
-* `cidr_blocks` - (Optional) Defines up to 10 external networks that can access
+* `cidr_blocks` - (Optional) Defines up to 20 external networks that can access
     Kubernetes master through HTTPS.
 
 The `master_authorized_networks_config.cidr_blocks` block supports:
@@ -277,10 +323,14 @@ The `node_config` block supports:
 * `disk_size_gb` - (Optional) Size of the disk attached to each node, specified
     in GB. The smallest allowed disk size is 10GB. Defaults to 100GB.
 
-* `guest_accelerator` - (Optional) List of the type and count of accelerator cards attached to the instance. 
+* `disk_type` - (Optional) Type of the disk attached to each node
+    (e.g. 'pd-standard' or 'pd-ssd'). If unspecified, the default disk type is 'pd-standard'
+
+* `guest_accelerator` - (Optional) List of the type and count of accelerator cards attached to the instance.
     Structure documented below.
 
-* `image_type` - (Optional) The image type to use for this node.
+* `image_type` - (Optional) The image type to use for this node. Note that changing the image type
+    will delete and recreate all nodes in the node pool.
 
 * `labels` - (Optional) The Kubernetes labels (key/value pairs) to be applied to each node.
 
@@ -322,12 +372,15 @@ The `node_config` block supports:
 * `tags` - (Optional) The list of instance tags applied to all nodes. Tags are used to identify
     valid sources or targets for network firewalls.
 
-* `taint` - (Optional, [Beta](/docs/providers/google/index.html#beta-features)) List of
+* `taint` - (Optional) List of
     [kubernetes taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
-    to apply to each node. Structure is documented below.
+    to apply to each node. Structure is documented below. This property is in beta, and should be
+    used with the terraform-provider-google-beta provider. See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html)
+    for more details on beta fields.
 
 * `workload_metadata_config` - (Optional) Metadata configuration to expose to workloads on the node pool.
-    Structure is documented below.
+    Structure is documented below. This property is in beta, and should be used with the terraform-provider-google-beta provider.
+    See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
 
 The `guest_accelerator` block supports:
 
@@ -339,6 +392,23 @@ The `pod_security_policy_config` block supports:
 
 * `enabled` (Required) - Enable the PodSecurityPolicy controller for this cluster.
     If enabled, pods must be valid under a PodSecurityPolicy to be created.
+
+The `private_cluster_config` block supports:
+
+* `enable_private_endpoint` (Optional) - Whether the master's internal IP address is used as the cluster endpoint.
+
+* `enable_private_nodes` (Optional) - Whether nodes have internal IP addresses only. If enabled, all nodes are given only RFC 1918 private
+    addresses and communicate with the master via private networking.
+
+* `master_ipv4_cidr_block` (Optional) - The IP range in CIDR notation to use for the hosted master network. This range will be used for
+    assigning internal IP addresses to the master or set of masters, as well as the ILB VIP. This range must not overlap with any other ranges
+    in use within the cluster's network.
+
+In addition, the `private_cluster_config` allows access to the following read-only fields:
+
+* `private_endpoint` - The internal IP address of this cluster's master endpoint.
+
+* `public_endpoint` - The external IP address of this cluster's master endpoint.
 
 The `taint` block supports:
 
@@ -395,8 +465,9 @@ exported:
 
 ## Import
 
-GKE clusters can be imported using the `project` , `zone` or `region`, and `name`. If
-the project is omitted, the default provider value will be used. Examples:
+GKE clusters can be imported using the `project` , `zone` or `region` (`region`
+is deprecated, see above), and `name`. If the project is omitted, the default
+provider value will be used. Examples:
 
 ```
 $ terraform import google_container_cluster.mycluster my-gcp-project/us-east1-a/my-cluster

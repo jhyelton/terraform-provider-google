@@ -27,6 +27,7 @@ Represents a TargetSslProxy resource, which is used by one or more
 global forwarding rule to route incoming SSL requests to a backend
 service.
 
+
 To get more information about TargetSslProxy, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)
@@ -37,27 +38,27 @@ To get more information about TargetSslProxy, see:
 
 ```hcl
 resource "google_compute_target_ssl_proxy" "default" {
-  name = "test"
-  backend_service = "${google_compute_backend_service.default.self_link}"
+  name             = "test-proxy"
+  backend_service  = "${google_compute_backend_service.default.self_link}"
   ssl_certificates = ["${google_compute_ssl_certificate.default.self_link}"]
 }
 
 resource "google_compute_ssl_certificate" "default" {
-  name = "default-cert"
-  private_key = "${file("path/to/test.key")}"
-  certificate = "${file("path/to/test.crt")}"
+  name        = "default-cert"
+  private_key = "${file("path/to/private.key")}"
+  certificate = "${file("path/to/certificate.crt")}"
 }
 
 resource "google_compute_backend_service" "default" {
-  name = "default-backend"
-  protocol    = "SSL"
+  name          = "backend-service"
+  protocol      = "SSL"
   health_checks = ["${google_compute_health_check.default.self_link}"]
 }
 
 resource "google_compute_health_check" "default" {
-  name = "default-health-check"
+  name               = "health-check"
   check_interval_sec = 1
-  timeout_sec = 1
+  timeout_sec        = 1
   tcp_health_check {
     port = "443"
   }
@@ -68,6 +69,7 @@ resource "google_compute_health_check" "default" {
 
 The following arguments are supported:
 
+
 * `name` -
   (Required)
   Name of the resource. Provided by the client when the resource is
@@ -77,9 +79,11 @@ The following arguments are supported:
   first character must be a lowercase letter, and all following
   characters must be a dash, lowercase letter, or digit, except the last
   character, which cannot be a dash.
+
 * `backend_service` -
   (Required)
   A reference to the BackendService resource.
+
 * `ssl_certificates` -
   (Required)
   A list of SslCertificate resources that are used to authenticate
@@ -89,19 +93,22 @@ The following arguments are supported:
 
 - - -
 
+
 * `description` -
   (Optional)
   An optional description of this resource.
+
 * `proxy_header` -
   (Optional)
   Specifies the type of proxy header to append before sending data to
   the backend, either NONE or PROXY_V1. The default is NONE.
+
 * `ssl_policy` -
   (Optional)
   A reference to the SslPolicy resource that will be associated with
   the TargetSslProxy resource. If not set, the TargetSslProxy
   resource will not have any SSL policy configured.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
@@ -109,8 +116,10 @@ The following arguments are supported:
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
+
 * `creation_timestamp` -
   Creation timestamp in RFC3339 text format.
+
 * `proxy_id` -
   The unique identifier for the resource.
 * `self_link` - The URI of the created resource.

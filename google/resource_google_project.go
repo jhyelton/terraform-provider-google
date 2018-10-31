@@ -92,10 +92,12 @@ func resourceGoogleProject() *schema.Resource {
 				Set:      schema.HashString,
 			},
 			"app_engine": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     appEngineResource(),
-				MaxItems: 1,
+				Type:       schema.TypeList,
+				Optional:   true,
+				Computed:   true,
+				Elem:       appEngineResource(),
+				MaxItems:   1,
+				Deprecated: "Use the google_app_engine_application resource instead.",
 			},
 		},
 	}
@@ -116,6 +118,7 @@ func appEngineResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{
 					"northamerica-northeast1",
 					"us-central",
+					"us-west2",
 					"us-east1",
 					"us-east4",
 					"southamerica-east1",
@@ -205,13 +208,8 @@ func appEngineFeatureSettingsResource() *schema.Resource {
 }
 
 func resourceGoogleProjectCustomizeDiff(diff *schema.ResourceDiff, meta interface{}) error {
-	if old, new := diff.GetChange("app_engine.#"); old != nil && new != nil && old.(int) > 0 && new.(int) < 1 {
-		// if we're going from app_engine set to unset, we need to delete the project, app_engine has no delete
-		return diff.ForceNew("app_engine")
-	} else if old, _ := diff.GetChange("app_engine.0.location_id"); diff.HasChange("app_engine.0.location_id") && old != nil && old.(string) != "" {
-		// if location_id was already set, and has a new value, that forces a new app
-		// if location_id wasn't set, don't force a new value, as we're just enabling app engine
-		return diff.ForceNew("app_engine.0.location_id")
+	if old, _ := diff.GetChange("app_engine.0.location_id"); diff.HasChange("app_engine.0.location_id") && old != nil && old.(string) != "" {
+		return fmt.Errorf("Cannot change app_engine.0.location_id once the app is created.")
 	}
 	return nil
 }
@@ -239,7 +237,10 @@ func resourceGoogleProjectCreate(d *schema.ResourceData, meta interface{}) error
 
 	op, err := config.clientResourceManager.Projects.Create(project).Do()
 	if err != nil {
-		return fmt.Errorf("Error creating project %s (%s): %s.", project.ProjectId, project.Name, err)
+		return fmt.Errorf("error creating project %s (%s): %s. "+
+			"If you received a 403 error, make sure you have the"+
+			" `roles/resourcemanager.projectCreator` permission",
+			project.ProjectId, project.Name, err)
 	}
 
 	d.SetId(pid)
@@ -382,6 +383,7 @@ func resourceGoogleProjectRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("app_engine", []map[string]interface{}{})
 	} else if isApiNotEnabledError(err) {
 		log.Printf("[WARN] App Engine Admin API not enabled, please enable it to read App Engine info about project %q: %s", pid, err.Error())
+		d.Set("app_engine", []map[string]interface{}{})
 	} else {
 		appBlocks, err := flattenAppEngineApp(app)
 		if err != nil {
@@ -588,12 +590,12 @@ func forceDeleteComputeNetwork(projectId, networkName string, config *Config) er
 func updateProjectBillingAccount(d *schema.ResourceData, config *Config) error {
 	pid := d.Id()
 	name := d.Get("billing_account").(string)
-	ba := cloudbilling.ProjectBillingInfo{}
+	ba := &cloudbilling.ProjectBillingInfo{}
 	// If we're unlinking an existing billing account, an empty request does that, not an empty-string billing account.
 	if name != "" {
 		ba.BillingAccountName = "billingAccounts/" + name
 	}
-	_, err := config.clientBilling.Projects.UpdateBillingInfo(prefixedProject(pid), &ba).Do()
+	_, err := config.clientBilling.Projects.UpdateBillingInfo(prefixedProject(pid), ba).Do()
 	if err != nil {
 		d.Set("billing_account", "")
 		if _err, ok := err.(*googleapi.Error); ok {
@@ -602,20 +604,18 @@ func updateProjectBillingAccount(d *schema.ResourceData, config *Config) error {
 		return fmt.Errorf("Error setting billing account %q for project %q: %v", name, prefixedProject(pid), err)
 	}
 	for retries := 0; retries < 3; retries++ {
-		err = resourceGoogleProjectRead(d, config)
+		ba, err = config.clientBilling.Projects.GetBillingInfo(prefixedProject(pid)).Do()
 		if err != nil {
 			return err
 		}
-		if d.Get("billing_account").(string) == name {
-			break
+		baName := strings.TrimPrefix(ba.BillingAccountName, "billingAccounts/")
+		if baName == name {
+			return nil
 		}
-		time.Sleep(3)
+		time.Sleep(3 * time.Second)
 	}
-	if d.Get("billing_account").(string) != name {
-		return fmt.Errorf("Timed out waiting for billing account to return correct value.  Waiting for %s, got %s.",
-			d.Get("billding_account").(string), name)
-	}
-	return nil
+	return fmt.Errorf("Timed out waiting for billing account to return correct value.  Waiting for %s, got %s.",
+		name, strings.TrimPrefix(ba.BillingAccountName, "billingAccounts/"))
 }
 
 func expandAppEngineApp(d *schema.ResourceData) (*appengine.Application, error) {

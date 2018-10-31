@@ -43,6 +43,7 @@ sending virtual machine's routing table will be dropped.
 A Route resource must have exactly one specification of either
 nextHopGateway, nextHopInstance, nextHopIp, or nextHopVpnTunnel.
 
+
 To get more information about Route, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/rest/v1/routes)
@@ -52,23 +53,16 @@ To get more information about Route, see:
 ## Example Usage
 
 ```hcl
-resource "google_compute_network" "default" {
-  name = "compute-network"
-}
-
-resource "google_compute_subnetwork" "default" {
-  name          = "compute-subnetwork"
-  ip_cidr_range = "10.0.0.0/16"
-  network       = "${google_compute_network.default.self_link}"
-  region        = "us-central1"
-}
-
 resource "google_compute_route" "default" {
   name        = "network-route"
   dest_range  = "15.0.0.0/24"
-  network     = "${google_compute_network.foobar.name}"
-  next_hop_ip = "10.0.1.5"
+  network     = "${google_compute_network.default.name}"
+  next_hop_ip = "10.132.1.5"
   priority    = 100
+}
+
+resource "google_compute_network" "default" {
+  name = "compute-network"
 }
 ```
 
@@ -76,10 +70,12 @@ resource "google_compute_route" "default" {
 
 The following arguments are supported:
 
+
 * `dest_range` -
   (Required)
   The destination range of outgoing packets that this route applies to.
   Only IPv4 is supported.
+
 * `name` -
   (Required)
   Name of the resource. Provided by the client when the resource is
@@ -89,6 +85,7 @@ The following arguments are supported:
   the first character must be a lowercase letter, and all following
   characters must be a dash, lowercase letter, or digit, except the
   last character, which cannot be a dash.
+
 * `network` -
   (Required)
   The network that this route applies to.
@@ -96,50 +93,51 @@ The following arguments are supported:
 
 - - -
 
+
 * `description` -
   (Optional)
   An optional description of this resource. Provide this property
   when you create the resource.
+
 * `priority` -
   (Optional)
   The priority of this route. Priority is used to break ties in cases
   where there is more than one matching route of equal prefix length.
-
   In the case of two routes with equal prefix length, the one with the
   lowest-numbered priority value wins.
-
   Default value is 1000. Valid range is 0 through 65535.
+
 * `tags` -
   (Optional)
   A list of instance tags to which this route applies.
+
 * `next_hop_gateway` -
   (Optional)
   URL to a gateway that should handle matching packets.
-
   Currently, you can only specify the internet gateway, using a full or
   partial valid URL:
+  * `https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway`
+  * `projects/project/global/gateways/default-internet-gateway`
+  * `global/gateways/default-internet-gateway`
+  * The string `default-internet-gateway`.
 
-  * https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway
-  * projects/project/global/gateways/default-internet-gateway
-  * global/gateways/default-internet-gateway
-  You can also provide the string 'default-internet-gateway'.
 * `next_hop_instance` -
   (Optional)
   URL to an instance that should handle matching packets.
   You can specify this as a full or partial URL. For example:
+  * `https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance`
+  * `projects/project/zones/zone/instances/instance`
+  * `zones/zone/instances/instance`
+  * Just the instance name, with the zone in `next_hop_instance_zone`.
 
-  * https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance
-  * projects/project/zones/zone/instances/instance
-  * zones/zone/instances/instance
-  You can also provide just the instance name, with the zone in
-  `next_hop_instance_zone`.
 * `next_hop_ip` -
   (Optional)
   Network IP address of an instance that should handle matching packets.
+
 * `next_hop_vpn_tunnel` -
   (Optional)
   URL to a VpnTunnel that should handle matching packets.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
@@ -147,9 +145,11 @@ The following arguments are supported:
   specified)  The zone of the instance specified in
   `next_hop_instance`.  Omit if `next_hop_instance` is specified as
   a URL.
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
+
 
 * `next_hop_network` -
   URL to a Network that should handle matching packets.

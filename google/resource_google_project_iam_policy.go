@@ -18,7 +18,7 @@ func resourceGoogleProjectIamPolicy() *schema.Resource {
 		Update: resourceGoogleProjectIamPolicyUpdate,
 		Delete: resourceGoogleProjectIamPolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceGoogleProjectIamPolicyImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -43,8 +43,9 @@ func resourceGoogleProjectIamPolicy() *schema.Resource {
 				Computed: true,
 			},
 			"restore_policy": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Deprecated: "This field will be removed alongside the authoritative field. To ignore changes not managed by Terraform, use google_project_iam_binding and google_project_iam_member instead. See https://www.terraform.io/docs/providers/google/r/google_project_iam.html for more information.",
+				Type:       schema.TypeString,
+				Computed:   true,
 			},
 			"disable_project": &schema.Schema{
 				Deprecated: "This will be removed with the authoritative field. Use lifecycle.prevent_destroy instead.",
@@ -262,6 +263,11 @@ func resourceGoogleProjectIamPolicyDelete(d *schema.ResourceData, meta interface
 	}
 	d.SetId("")
 	return nil
+}
+
+func resourceGoogleProjectIamPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	d.Set("project", d.Id())
+	return []*schema.ResourceData{d}, nil
 }
 
 // Subtract all bindings in policy b from policy a, and return the result

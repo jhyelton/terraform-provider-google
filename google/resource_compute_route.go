@@ -63,21 +63,6 @@ func resourceComputeRoute() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"priority": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-				Default:  1000,
-			},
-			"tags": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Set: schema.HashString,
-			},
 			"next_hop_gateway": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -99,6 +84,21 @@ func resourceComputeRoute() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"priority": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
+				Default:  1000,
+			},
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
 			},
 			"next_hop_network": {
 				Type:     schema.TypeString,
@@ -126,70 +126,65 @@ func resourceComputeRoute() *schema.Resource {
 func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	obj := make(map[string]interface{})
 	destRangeProp, err := expandComputeRouteDestRange(d.Get("dest_range"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("dest_range"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, destRangeProp)) {
+	} else if v, ok := d.GetOkExists("dest_range"); !isEmptyValue(reflect.ValueOf(destRangeProp)) && (ok || !reflect.DeepEqual(v, destRangeProp)) {
 		obj["destRange"] = destRangeProp
 	}
 	descriptionProp, err := expandComputeRouteDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
 	nameProp, err := expandComputeRouteName(d.Get("name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
+	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
 	networkProp, err := expandComputeRouteNetwork(d.Get("network"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("network"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkProp)) {
+	} else if v, ok := d.GetOkExists("network"); !isEmptyValue(reflect.ValueOf(networkProp)) && (ok || !reflect.DeepEqual(v, networkProp)) {
 		obj["network"] = networkProp
 	}
 	priorityProp, err := expandComputeRoutePriority(d.Get("priority"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("priority"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, priorityProp)) {
+	} else if v, ok := d.GetOkExists("priority"); !isEmptyValue(reflect.ValueOf(priorityProp)) && (ok || !reflect.DeepEqual(v, priorityProp)) {
 		obj["priority"] = priorityProp
 	}
 	tagsProp, err := expandComputeRouteTags(d.Get("tags"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("tags"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, tagsProp)) {
+	} else if v, ok := d.GetOkExists("tags"); !isEmptyValue(reflect.ValueOf(tagsProp)) && (ok || !reflect.DeepEqual(v, tagsProp)) {
 		obj["tags"] = tagsProp
 	}
 	nextHopGatewayProp, err := expandComputeRouteNextHopGateway(d.Get("next_hop_gateway"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("next_hop_gateway"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nextHopGatewayProp)) {
+	} else if v, ok := d.GetOkExists("next_hop_gateway"); !isEmptyValue(reflect.ValueOf(nextHopGatewayProp)) && (ok || !reflect.DeepEqual(v, nextHopGatewayProp)) {
 		obj["nextHopGateway"] = nextHopGatewayProp
 	}
 	nextHopInstanceProp, err := expandComputeRouteNextHopInstance(d.Get("next_hop_instance"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("next_hop_instance"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nextHopInstanceProp)) {
+	} else if v, ok := d.GetOkExists("next_hop_instance"); !isEmptyValue(reflect.ValueOf(nextHopInstanceProp)) && (ok || !reflect.DeepEqual(v, nextHopInstanceProp)) {
 		obj["nextHopInstance"] = nextHopInstanceProp
 	}
 	nextHopIpProp, err := expandComputeRouteNextHopIp(d.Get("next_hop_ip"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("next_hop_ip"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nextHopIpProp)) {
+	} else if v, ok := d.GetOkExists("next_hop_ip"); !isEmptyValue(reflect.ValueOf(nextHopIpProp)) && (ok || !reflect.DeepEqual(v, nextHopIpProp)) {
 		obj["nextHopIp"] = nextHopIpProp
 	}
 	nextHopVpnTunnelProp, err := expandComputeRouteNextHopVpnTunnel(d.Get("next_hop_vpn_tunnel"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("next_hop_vpn_tunnel"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nextHopVpnTunnelProp)) {
+	} else if v, ok := d.GetOkExists("next_hop_vpn_tunnel"); !isEmptyValue(reflect.ValueOf(nextHopVpnTunnelProp)) && (ok || !reflect.DeepEqual(v, nextHopVpnTunnelProp)) {
 		obj["nextHopVpnTunnel"] = nextHopVpnTunnelProp
 	}
 
@@ -199,7 +194,7 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] Creating new Route: %#v", obj)
-	res, err := Post(config, url, obj)
+	res, err := sendRequest(config, "POST", url, obj)
 	if err != nil {
 		return fmt.Errorf("Error creating Route: %s", err)
 	}
@@ -211,6 +206,10 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	d.SetId(id)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -235,17 +234,12 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 func resourceComputeRouteRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/routes/{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := Get(config, url)
+	res, err := sendRequest(config, "GET", url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeRoute %q", d.Id()))
 	}
@@ -291,6 +285,10 @@ func resourceComputeRouteRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
@@ -301,22 +299,22 @@ func resourceComputeRouteRead(d *schema.ResourceData, meta interface{}) error {
 func resourceComputeRouteDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/routes/{{name}}")
 	if err != nil {
 		return err
 	}
 
+	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Route %q", d.Id())
-	res, err := Delete(config, url)
+	res, err := sendRequest(config, "DELETE", url, obj)
 	if err != nil {
 		return handleNotFoundError(err, d, "Route")
 	}
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -362,7 +360,10 @@ func flattenComputeRouteName(v interface{}) interface{} {
 }
 
 func flattenComputeRouteNetwork(v interface{}) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return ConvertSelfLinkToV1(v.(string))
 }
 
 func flattenComputeRoutePriority(v interface{}) interface{} {
@@ -376,7 +377,10 @@ func flattenComputeRoutePriority(v interface{}) interface{} {
 }
 
 func flattenComputeRouteTags(v interface{}) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenComputeRouteNextHopGateway(v interface{}) interface{} {

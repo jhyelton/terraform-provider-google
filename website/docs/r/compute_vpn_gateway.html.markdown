@@ -24,6 +24,7 @@ description: |-
 Represents a VPN gateway running in GCP. This virtual device is managed
 by Google, but used only by you.
 
+
 To get more information about VpnGateway, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/rest/v1/targetVpnGateways)
@@ -31,25 +32,21 @@ To get more information about VpnGateway, see:
 ## Example Usage
 
 ```hcl
-resource "google_compute_network" "network1" {
-  name       = "network1"
-  ipv4_range = "10.120.0.0/16"
-}
-
 resource "google_compute_vpn_gateway" "target_gateway" {
   name    = "vpn1"
   network = "${google_compute_network.network1.self_link}"
-  region  = "${var.region}"
+}
+
+resource "google_compute_network" "network1" {
+  name       = "network1"
 }
 
 resource "google_compute_address" "vpn_static_ip" {
   name   = "vpn-static-ip"
-  region = "${var.region}"
 }
 
 resource "google_compute_forwarding_rule" "fr_esp" {
   name        = "fr-esp"
-  region      = "${var.region}"
   ip_protocol = "ESP"
   ip_address  = "${google_compute_address.vpn_static_ip.address}"
   target      = "${google_compute_vpn_gateway.target_gateway.self_link}"
@@ -57,7 +54,6 @@ resource "google_compute_forwarding_rule" "fr_esp" {
 
 resource "google_compute_forwarding_rule" "fr_udp500" {
   name        = "fr-udp500"
-  region      = "${var.region}"
   ip_protocol = "UDP"
   port_range  = "500"
   ip_address  = "${google_compute_address.vpn_static_ip.address}"
@@ -66,7 +62,6 @@ resource "google_compute_forwarding_rule" "fr_udp500" {
 
 resource "google_compute_forwarding_rule" "fr_udp4500" {
   name        = "fr-udp4500"
-  region      = "${var.region}"
   ip_protocol = "UDP"
   port_range  = "4500"
   ip_address  = "${google_compute_address.vpn_static_ip.address}"
@@ -75,7 +70,6 @@ resource "google_compute_forwarding_rule" "fr_udp4500" {
 
 resource "google_compute_vpn_tunnel" "tunnel1" {
   name          = "tunnel1"
-  region        = "${var.region}"
   peer_ip       = "15.0.0.120"
   shared_secret = "a secret message"
 
@@ -102,6 +96,7 @@ resource "google_compute_route" "route1" {
 
 The following arguments are supported:
 
+
 * `name` -
   (Required)
   Name of the resource. Provided by the client when the resource is
@@ -111,6 +106,7 @@ The following arguments are supported:
   the first character must be a lowercase letter, and all following
   characters must be a dash, lowercase letter, or digit, except the last
   character, which cannot be a dash.
+
 * `network` -
   (Required)
   The network this VPN gateway is accepting traffic for.
@@ -118,19 +114,22 @@ The following arguments are supported:
 
 - - -
 
+
 * `description` -
   (Optional)
   An optional description of this resource.
+
 * `region` -
   (Optional)
   The region this gateway should sit in.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
+
 
 * `creation_timestamp` -
   Creation timestamp in RFC3339 text format.

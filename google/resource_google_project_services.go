@@ -1,13 +1,13 @@
 package google
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
-	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/serviceusage/v1beta1"
 )
@@ -47,9 +47,9 @@ func resourceGoogleProjectServices() *schema.Resource {
 // These services can only be enabled as a side-effect of enabling other services,
 // so don't bother storing them in the config or using them for diffing.
 var ignoreProjectServices = map[string]struct{}{
-	"containeranalysis.googleapis.com": struct{}{},
-	"dataproc-control.googleapis.com":  struct{}{},
-	"source.googleapis.com":            struct{}{},
+	"dataproc-control.googleapis.com":        struct{}{},
+	"source.googleapis.com":                  struct{}{},
+	"stackdriverprovisioning.googleapis.com": struct{}{},
 }
 
 func resourceGoogleProjectServicesCreate(d *schema.ResourceData, meta interface{}) error {
@@ -201,7 +201,7 @@ func getApiServices(pid string, config *Config, ignore map[string]struct{}) ([]s
 		ctx := context.Background()
 		return config.clientServiceUsage.Services.
 			List("projects/"+pid).
-			Fields("services/name").
+			Fields("services/name,nextPageToken").
 			Filter("state:ENABLED").
 			Pages(ctx, func(r *serviceusage.ListServicesResponse) error {
 				for _, v := range r.Services {

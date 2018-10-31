@@ -35,6 +35,7 @@ the instance is assigned a new internal IP address, either by Compute
 Engine or by you. External IP addresses can be either ephemeral or
 static.
 
+
 To get more information about Address, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/beta/addresses)
@@ -45,7 +46,7 @@ To get more information about Address, see:
 ## Example Usage
 
 ```hcl
-resource "google_compute_address" "default" {
+resource "google_compute_address" "ip_address" {
   name = "my-address"
 }
 ```
@@ -69,10 +70,40 @@ resource "google_compute_address" "internal_with_subnet_and_address" {
   region       = "us-central1"
 }
 ```
+```hcl
+resource "google_compute_address" "static" {
+  name = "ipv4-address"
+}
+
+data "google_compute_image" "debian_image" {
+	family  = "debian-9"
+	project = "debian-cloud"
+}
+
+resource "google_compute_instance" "instance_with_ip" {
+	name         = "vm-instance"
+	machine_type = "f1-micro"
+	zone         = "us-central1-a"
+
+	boot_disk {
+		initialize_params{
+			image = "${data.google_compute_image.debian_image.self_link}"
+		}
+	}
+
+	network_interface {
+		network = "default"
+		access_config {
+			nat_ip = "${google_compute_address.static.address}"
+		}
+	}
+}
+```
 
 ## Argument Reference
 
 The following arguments are supported:
+
 
 * `name` -
   (Required)
@@ -86,35 +117,46 @@ The following arguments are supported:
 
 - - -
 
+
 * `address` -
   (Optional)
   The static external IP address represented by this resource. Only
   IPv4 is supported. An address may only be specified for INTERNAL
   address types. The IP address must be inside the specified subnetwork,
   if any.
+
 * `address_type` -
   (Optional)
   The type of address to reserve, either INTERNAL or EXTERNAL.
   If unspecified, defaults to EXTERNAL.
+
 * `description` -
   (Optional)
   An optional description of this resource.
+
 * `network_tier` -
   (Optional)
   The networking tier used for configuring this address. This field can
   take the following values: PREMIUM or STANDARD. If this field is not
   specified, it is assumed to be PREMIUM.
+
 * `subnetwork` -
   (Optional)
   The URL of the subnetwork in which to reserve the address. If an IP
   address is specified, it must be within the subnetwork's IP range.
   This field can only be used with INTERNAL type with
   GCE_ENDPOINT/DNS_RESOLVER purposes.
+
+* `labels` -
+  (Optional)
+  Labels to apply to this address.  A list of key->value pairs.  This property is in beta, and should be used with the terraform-provider-google-beta provider.
+  See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
+
 * `region` -
   (Optional)
   The Region in which the created address should reside.
   If it is not provided, the provider region is used.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
@@ -122,20 +164,29 @@ The following arguments are supported:
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
+
 * `creation_timestamp` -
   Creation timestamp in RFC3339 text format.
+
 * `users` -
   The URLs of the resources that are using this address.
+
+* `label_fingerprint` -
+  The fingerprint used for optimistic locking of this resource.  Used
+  internally during updates.  This property is in beta, and should be used with the terraform-provider-google-beta provider.
+  See [Provider Versions](https://terraform.io/docs/providers/google/provider_versions.html) for more details on beta fields.
 * `self_link` - The URI of the created resource.
 
 
-* `address`: The IP of the created resource.
+* `address` - The IP of the created resource.
+
 ## Timeouts
 
 This resource provides the following
 [Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
 
 - `create` - Default is 4 minutes.
+- `update` - Default is 4 minutes.
 - `delete` - Default is 4 minutes.
 
 ## Import

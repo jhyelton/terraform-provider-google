@@ -61,7 +61,7 @@ func resourcePubsubSubscription() *schema.Resource {
 						"attributes": &schema.Schema{
 							Type:     schema.TypeMap,
 							Optional: true,
-							Elem:     schema.TypeString,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 
 						"push_endpoint": &schema.Schema{
@@ -214,7 +214,7 @@ func flattenPubsubSubscriptionPushConfig(pushConfig *pubsub.PushConfig) []map[st
 }
 
 func expandPubsubSubscriptionPushConfig(configured []interface{}) *pubsub.PushConfig {
-	if len(configured) == 0 {
+	if len(configured) == 0 || configured[0] == nil {
 		// An empty `pushConfig` indicates that the Pub/Sub system should stop pushing messages
 		// from the given subscription and allow messages to be pulled and acknowledged.
 		return &pubsub.PushConfig{}

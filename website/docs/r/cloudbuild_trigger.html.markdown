@@ -54,11 +54,6 @@ resource "google_cloudbuild_trigger" "build_trigger" {
 
 The following arguments are supported:
 
-* `description` - (Optional) A brief description of this resource.
-
-* `trigger_template` - (Optional) Location of the source in a Google
-Cloud Source Repository. Structure is documented below.
-
 * `build` - (Optional) A build resource in the Container Builder API.
 Structure is documented below. At a high
 level, a `build` describes where to find source code, how to build it (for
@@ -74,28 +69,33 @@ will be expanded when the build is created:
     or resolved from the specified branch or tag.
   * `$SHORT_SHA`: first 7 characters of `$REVISION_ID` or `$COMMIT_SHA`.
 
+* `description` - (Optional) A brief description of this resource.
+
 * `filename` - (Optional) Specify the path to a Cloud Build configuration file
 in the Git repo. This is mutually exclusive with `build`. This is typically
 `cloudbuild.yaml` however it can be specified by the user.
 
----
+*  `project` - (Optional) The ID of the project that the trigger will be created in.
+Defaults to the provider project configuration.
 
-The `trigger_template` block supports:
+* `substitutions`: (Optional) User-defined substitutions.
+User-defined substitutions must conform to the following rules:
+  *  Substitutions must begin with an underscore (`_`) and use only
+     uppercase-letters and numbers (respecting the regular expression
+     `_[A-Z0-9_]+`). This prevents conflicts with built-in substitutions.
+  *  Unmatched keys in the template will cause an error (for example, if a build
+     request includes `$_FOO` and the substitutions map doesn’t define `_FOO`).
+  *  Unmatched keys in the parameters list will result in an error (for example,
+     if a substitutions map defines `_FOO` but the build request doesn't include `$_FOO`).
+  *  To include a literal `$_VARIABLE` in the template, you must escape with `$$`.
+  *  You can explicitly denote variable expansion using the `${_VAR}` syntax. This prevents
+     ambiguity in cases like `${_FOO}BAR`, where `$_FOO` is a variable.
+  *  The number of parameters is limited to 100 parameters.
+  *  The length of a parameter key and the length of a parameter value
+     are limited to 100 characters.
 
-* `branch_name` - (Optional) Name of the branch to build.
-
-* `commit_sha` - (Optional) Explicit commit SHA to build.
-
-* `dir` - (Optional) Directory, relative to the source root, in which to run
-the build. This must be a relative path. If a step's `dir` is specified and
-is an absolute path, this value is ignored for that step's execution.
-
-* `project` - (Optional) ID of the project that owns the Cloud Source Repository.
-
-* `repo_name` - (Optional) Name of the Cloud Source Repository.
-
-* `tag_name` - (Optional) Name of the tag to build.
-
+* `trigger_template` - (Optional) Location of the source in a Google
+Cloud Source Repository. Structure is documented below.
 
 ---
 
@@ -131,3 +131,22 @@ when it is started. If the image used to run the step's container has an
 entrypoint, the `args` are used as arguments to that entrypoint. If the image
 does not define an entrypoint, the first element in args is used as the
 entrypoint, and the remainder will be used as arguments.
+
+---
+
+The `trigger_template` block supports:
+
+* `branch_name` - (Optional) Name of the branch to build.
+
+* `commit_sha` - (Optional) Explicit commit SHA to build.
+
+* `dir` - (Optional) Directory, relative to the source root, in which to run
+the build. This must be a relative path. If a step's `dir` is specified and
+is an absolute path, this value is ignored for that step's execution.
+
+* `project` - (Optional) ID of the project that owns the Cloud Source Repository.
+
+* `repo_name` - (Optional) Name of the Cloud Source Repository.
+
+* `tag_name` - (Optional) Name of the tag to build.
+

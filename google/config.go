@@ -24,6 +24,7 @@ import (
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	resourceManagerV2Beta1 "google.golang.org/api/cloudresourcemanager/v2beta1"
+	"google.golang.org/api/composer/v1"
 	computeBeta "google.golang.org/api/compute/v0.beta"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/container/v1"
@@ -32,6 +33,7 @@ import (
 	"google.golang.org/api/dataproc/v1"
 	"google.golang.org/api/dns/v1"
 	dnsBeta "google.golang.org/api/dns/v1beta2"
+	file "google.golang.org/api/file/v1beta1"
 	"google.golang.org/api/iam/v1"
 	cloudlogging "google.golang.org/api/logging/v2"
 	"google.golang.org/api/pubsub/v1"
@@ -58,8 +60,9 @@ type Config struct {
 
 	tokenSource oauth2.TokenSource
 
-	clientBilling                *cloudbilling.Service
+	clientBilling                *cloudbilling.APIService
 	clientBuild                  *cloudbuild.Service
+	clientComposer               *composer.Service
 	clientCompute                *compute.Service
 	clientComputeBeta            *computeBeta.Service
 	clientContainer              *container.Service
@@ -68,6 +71,7 @@ type Config struct {
 	clientDataflow               *dataflow.Service
 	clientDns                    *dns.Service
 	clientDnsBeta                *dnsBeta.Service
+	clientFilestore              *file.Service
 	clientKms                    *cloudkms.Service
 	clientLogging                *cloudlogging.Service
 	clientPubsub                 *pubsub.Service
@@ -346,6 +350,12 @@ func (c *Config) loadAndValidate() error {
 	}
 	c.clientDataproc.UserAgent = userAgent
 
+	c.clientFilestore, err = file.New(client)
+	if err != nil {
+		return err
+	}
+	c.clientFilestore.UserAgent = userAgent
+
 	log.Printf("[INFO] Instantiating Google Cloud IoT Core Client...")
 	c.clientCloudIoT, err = cloudiot.New(client)
 	if err != nil {
@@ -359,6 +369,13 @@ func (c *Config) loadAndValidate() error {
 		return err
 	}
 	c.clientAppEngine.UserAgent = userAgent
+
+	log.Printf("[INFO] Instantiating Cloud Composer Client...")
+	c.clientComposer, err = composer.New(client)
+	if err != nil {
+		return err
+	}
+	c.clientComposer.UserAgent = userAgent
 
 	return nil
 }

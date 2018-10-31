@@ -38,9 +38,10 @@ func resourceComputeInstanceGroupManager() *schema.Resource {
 			},
 
 			"version": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
+				Deprecated: "This field is in beta and will be removed from this provider. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Type:       schema.TypeList,
+				Optional:   true,
+				Computed:   true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -139,8 +140,17 @@ func resourceComputeInstanceGroupManager() *schema.Resource {
 			"update_strategy": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "RESTART",
-				ValidateFunc: validation.StringInSlice([]string{"RESTART", "NONE", "ROLLING_UPDATE"}, false),
+				Default:      "REPLACE",
+				ValidateFunc: validation.StringInSlice([]string{"RESTART", "NONE", "ROLLING_UPDATE", "REPLACE"}, false),
+				DiffSuppressFunc: func(key, old, new string, d *schema.ResourceData) bool {
+					if old == "REPLACE" && new == "RESTART" {
+						return true
+					}
+					if old == "RESTART" && new == "REPLACE" {
+						return true
+					}
+					return false
+				},
 			},
 
 			"target_pools": &schema.Schema{
@@ -159,9 +169,10 @@ func resourceComputeInstanceGroupManager() *schema.Resource {
 			},
 
 			"auto_healing_policies": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
+				Deprecated: "This field is in beta and will be removed from this provider. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Type:       schema.TypeList,
+				Optional:   true,
+				MaxItems:   1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"health_check": &schema.Schema{
@@ -180,9 +191,10 @@ func resourceComputeInstanceGroupManager() *schema.Resource {
 			},
 
 			"rolling_update_policy": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
+				Deprecated: "This field is in beta and will be removed from this provider. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Type:       schema.TypeList,
+				Optional:   true,
+				MaxItems:   1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"minimal_action": &schema.Schema{
@@ -435,7 +447,7 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 	d.Set("self_link", ConvertSelfLinkToV1(manager.SelfLink))
 	update_strategy, ok := d.GetOk("update_strategy")
 	if !ok {
-		update_strategy = "RESTART"
+		update_strategy = "REPLACE"
 	}
 	d.Set("update_strategy", update_strategy.(string))
 	d.Set("auto_healing_policies", flattenAutoHealingPolicies(manager.AutoHealingPolicies))
@@ -456,11 +468,11 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 	return nil
 }
 
-// Updates an instance group manager by applying an update strategy (REPLACE, RESTART) respecting a rolling update policy (availability settings,
-// interval between updates, and particularly, the type of update PROACTIVE or OPPORTUNISTIC because updates performed by API are considered
-// OPPORTUNISTIC by default)
-func performUpdate(config *Config, id string, updateStrategy string, rollingUpdatePolicy *computeBeta.InstanceGroupManagerUpdatePolicy, versions []*computeBeta.InstanceGroupManagerVersion, project string, zone string) error {
-	if updateStrategy == "RESTART" {
+// Updates an instance group manager by applying the update strategy (REPLACE, RESTART)
+// and rolling update policy (PROACTIVE, OPPORTUNISTIC). Updates performed by API
+// are OPPORTUNISTIC by default.
+func performZoneUpdate(config *Config, id string, updateStrategy string, rollingUpdatePolicy *computeBeta.InstanceGroupManagerUpdatePolicy, versions []*computeBeta.InstanceGroupManagerVersion, project string, zone string) error {
+	if updateStrategy == "RESTART" || updateStrategy == "REPLACE" {
 		managedInstances, err := config.clientComputeBeta.InstanceGroupManagers.ListManagedInstances(project, zone, id).Do()
 		if err != nil {
 			return fmt.Errorf("Error getting instance group managers instances: %s", err)
@@ -646,7 +658,7 @@ func resourceComputeInstanceGroupManagerUpdate(d *schema.ResourceData, meta inte
 
 		updateStrategy := d.Get("update_strategy").(string)
 		rollingUpdatePolicy := expandUpdatePolicy(d.Get("rolling_update_policy").([]interface{}))
-		err = performUpdate(config, d.Id(), updateStrategy, rollingUpdatePolicy, nil, project, zone)
+		err = performZoneUpdate(config, d.Id(), updateStrategy, rollingUpdatePolicy, nil, project, zone)
 		d.SetPartial("instance_template")
 	}
 
@@ -655,7 +667,7 @@ func resourceComputeInstanceGroupManagerUpdate(d *schema.ResourceData, meta inte
 		updateStrategy := d.Get("update_strategy").(string)
 		rollingUpdatePolicy := expandUpdatePolicy(d.Get("rolling_update_policy").([]interface{}))
 		versions := expandVersions(d.Get("version").([]interface{}))
-		err = performUpdate(config, d.Id(), updateStrategy, rollingUpdatePolicy, versions, project, zone)
+		err = performZoneUpdate(config, d.Id(), updateStrategy, rollingUpdatePolicy, versions, project, zone)
 		if err != nil {
 			return err
 		}

@@ -64,6 +64,20 @@ func getProject(d TerraformResourceData, config *Config) (string, error) {
 	return getProjectFromSchema("project", d, config)
 }
 
+// getProjectFromDiff reads the "project" field from the given diff and falls
+// back to the provider's value if not given. If the provider's value is not
+// given, an error is returned.
+func getProjectFromDiff(d *schema.ResourceDiff, config *Config) (string, error) {
+	res, ok := d.GetOk("project")
+	if ok {
+		return res.(string), nil
+	}
+	if config.Project != "" {
+		return config.Project, nil
+	}
+	return "", fmt.Errorf("%s: required field is not set", "project")
+}
+
 func getProjectFromInstanceState(is *terraform.InstanceState, config *Config) (string, error) {
 	res, ok := is.Attributes["project"]
 
@@ -166,6 +180,25 @@ func isApiNotEnabledError(err error) bool {
 	return false
 }
 
+func isFailedPreconditionError(err error) bool {
+	gerr, ok := errwrap.GetType(err, &googleapi.Error{}).(*googleapi.Error)
+	if !ok {
+		return false
+	}
+	if gerr == nil {
+		return false
+	}
+	if gerr.Code != 400 {
+		return false
+	}
+	for _, e := range gerr.Errors {
+		if e.Reason == "failedPrecondition" {
+			return true
+		}
+	}
+	return false
+}
+
 func isConflictError(err error) bool {
 	if e, ok := err.(*googleapi.Error); ok && e.Code == 409 {
 		return true
@@ -253,6 +286,11 @@ func expandLabels(d *schema.ResourceData) map[string]string {
 	return expandStringMap(d, "labels")
 }
 
+// expandEnvironmentVariables pulls the value of "environment_variables" out of a schema.ResourceData as a map[string]string.
+func expandEnvironmentVariables(d *schema.ResourceData) map[string]string {
+	return expandStringMap(d, "environment_variables")
+}
+
 // expandStringMap pulls the value of key out of a schema.ResourceData as a map[string]string.
 func expandStringMap(d *schema.ResourceData, key string) map[string]string {
 	v, ok := d.GetOk(key)
@@ -334,13 +372,19 @@ func retry(retryFunc func() error) error {
 }
 
 func retryTime(retryFunc func() error, minutes int) error {
-	return resource.Retry(time.Duration(minutes)*time.Minute, func() *resource.RetryError {
+	return retryTimeDuration(retryFunc, time.Duration(minutes)*time.Minute)
+}
+
+func retryTimeDuration(retryFunc func() error, duration time.Duration) error {
+	return resource.Retry(duration, func() *resource.RetryError {
 		err := retryFunc()
 		if err == nil {
 			return nil
 		}
-		if gerr, ok := err.(*googleapi.Error); ok && (gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503) {
-			return resource.RetryableError(gerr)
+		for _, e := range errwrap.GetAllType(err, &googleapi.Error{}) {
+			if gerr, ok := e.(*googleapi.Error); ok && (gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503) {
+				return resource.RetryableError(gerr)
+			}
 		}
 		return resource.NonRetryableError(err)
 	})

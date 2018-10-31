@@ -27,6 +27,7 @@ Represents a TargetTcpProxy resource, which is used by one or more
 global forwarding rule to route incoming TCP requests to a Backend
 service.
 
+
 To get more information about TargetTcpProxy, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/latest/targetTcpProxies)
@@ -37,21 +38,20 @@ To get more information about TargetTcpProxy, see:
 
 ```hcl
 resource "google_compute_target_tcp_proxy" "default" {
-  name = "test"
-  description = "test"
+  name            = "test-proxy"
   backend_service = "${google_compute_backend_service.default.self_link}"
 }
 
 resource "google_compute_backend_service" "default" {
-  name        = "default-backend"
-  protocol    = "TCP"
-  timeout_sec = 10
+  name          = "backend-service"
+  protocol      = "TCP"
+  timeout_sec   = 10
 
   health_checks = ["${google_compute_health_check.default.self_link}"]
 }
 
 resource "google_compute_health_check" "default" {
-  name = "default"
+  name               = "health-check"
   timeout_sec        = 1
   check_interval_sec = 1
 
@@ -65,6 +65,7 @@ resource "google_compute_health_check" "default" {
 
 The following arguments are supported:
 
+
 * `name` -
   (Required)
   Name of the resource. Provided by the client when the resource is
@@ -74,6 +75,7 @@ The following arguments are supported:
   first character must be a lowercase letter, and all following
   characters must be a dash, lowercase letter, or digit, except the last
   character, which cannot be a dash.
+
 * `backend_service` -
   (Required)
   A reference to the BackendService resource.
@@ -81,14 +83,16 @@ The following arguments are supported:
 
 - - -
 
+
 * `description` -
   (Optional)
   An optional description of this resource.
+
 * `proxy_header` -
   (Optional)
   Specifies the type of proxy header to append before sending data to
   the backend, either NONE or PROXY_V1. The default is NONE.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
@@ -96,8 +100,10 @@ The following arguments are supported:
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
+
 * `creation_timestamp` -
   Creation timestamp in RFC3339 text format.
+
 * `proxy_id` -
   The unique identifier for the resource.
 * `self_link` - The URI of the created resource.

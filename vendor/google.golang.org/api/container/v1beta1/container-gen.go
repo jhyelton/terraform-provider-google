@@ -333,6 +333,36 @@ func (s *AutoUpgradeOptions) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// BinaryAuthorization: Configuration for Binary Authorization.
+type BinaryAuthorization struct {
+	// Enabled: Enable Binary Authorization for this cluster. If enabled,
+	// all container
+	// images will be validated by Google Binauthz.
+	Enabled bool `json:"enabled,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Enabled") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Enabled") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BinaryAuthorization) MarshalJSON() ([]byte, error) {
+	type NoMethod BinaryAuthorization
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // CancelOperationRequest: CancelOperationRequest cancels a single
 // operation.
 type CancelOperationRequest struct {
@@ -452,6 +482,12 @@ type Cluster struct {
 	// in the cluster.
 	AddonsConfig *AddonsConfig `json:"addonsConfig,omitempty"`
 
+	// Autoscaling: Cluster-level autoscaling configuration.
+	Autoscaling *ClusterAutoscaling `json:"autoscaling,omitempty"`
+
+	// BinaryAuthorization: Configuration for Binary Authorization.
+	BinaryAuthorization *BinaryAuthorization `json:"binaryAuthorization,omitempty"`
+
 	// ClusterIpv4Cidr: The IP address range of the container pods in this
 	// cluster,
 	// in
@@ -460,6 +496,9 @@ type Cluster struct {
 	// notation (e.g. `10.96.0.0/14`). Leave blank to have
 	// one automatically chosen or specify a `/14` block in `10.0.0.0/8`.
 	ClusterIpv4Cidr string `json:"clusterIpv4Cidr,omitempty"`
+
+	// Conditions: Which conditions caused the current cluster state.
+	Conditions []*StatusCondition `json:"conditions,omitempty"`
 
 	// CreateTime: [Output only] The time the cluster was created,
 	// in
@@ -474,12 +513,22 @@ type Cluster struct {
 	// cluster.
 	CurrentNodeCount int64 `json:"currentNodeCount,omitempty"`
 
-	// CurrentNodeVersion: [Output only] The current version of the node
-	// software components.
+	// CurrentNodeVersion: [Output only] Deprecated,
+	// use
+	// [NodePool.version](/kubernetes-engine/docs/reference/rest/v1beta1/
+	// projects.zones.clusters.nodePool)
+	// instead. The current version of the node software components.
 	// If they are currently at multiple versions because they're in the
 	// process
 	// of being upgraded, this reflects the minimum version of all nodes.
 	CurrentNodeVersion string `json:"currentNodeVersion,omitempty"`
+
+	// DefaultMaxPodsConstraint: The default constraint on the maximum
+	// number of pods that can be run
+	// simultaneously on a node in the node pool of this cluster. Only
+	// honored
+	// if cluster created with IP Alias support.
+	DefaultMaxPodsConstraint *MaxPodsConstraint `json:"defaultMaxPodsConstraint,omitempty"`
 
 	// Description: An optional description of this cluster.
 	Description string `json:"description,omitempty"`
@@ -495,6 +544,9 @@ type Cluster struct {
 	// after
 	// creation.
 	EnableKubernetesAlpha bool `json:"enableKubernetesAlpha,omitempty"`
+
+	// EnableTpu: Enable the ability to use Cloud TPUs in this cluster.
+	EnableTpu bool `json:"enableTpu,omitempty"`
 
 	// Endpoint: [Output only] The IP address of this cluster's master
 	// endpoint.
@@ -603,6 +655,9 @@ type Cluster struct {
 	// This prefix will be used for assigning private IP addresses to
 	// the
 	// master or set of masters, as well as the ILB VIP.
+	// This field is deprecated,
+	// use
+	// private_cluster_config.master_ipv4_cidr_block instead.
 	MasterIpv4CidrBlock string `json:"masterIpv4CidrBlock,omitempty"`
 
 	// MonitoringService: The monitoring service the cluster should use to
@@ -679,7 +734,11 @@ type Cluster struct {
 	// default have no external IP addresses on the nodes and where nodes
 	// and the
 	// master communicate over private IP addresses.
+	// This field is deprecated, use private_cluster_config.enabled instead.
 	PrivateCluster bool `json:"privateCluster,omitempty"`
+
+	// PrivateClusterConfig: Configuration for private cluster.
+	PrivateClusterConfig *PrivateClusterConfig `json:"privateClusterConfig,omitempty"`
 
 	// ResourceLabels: The resource labels for the cluster to use to
 	// annotate any related
@@ -737,6 +796,14 @@ type Cluster struct {
 	// the name.
 	Subnetwork string `json:"subnetwork,omitempty"`
 
+	// TpuIpv4CidrBlock: [Output only] The IP address range of the Cloud
+	// TPUs in this cluster,
+	// in
+	// [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+	//
+	// notation (e.g. `1.2.3.4/29`).
+	TpuIpv4CidrBlock string `json:"tpuIpv4CidrBlock,omitempty"`
+
 	// Zone: [Output only] The name of the Google Compute
 	// Engine
 	// [zone](/compute/docs/zones#available) in which the
@@ -772,6 +839,46 @@ func (s *Cluster) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ClusterAutoscaling: ClusterAutoscaling contains global, per-cluster
+// information
+// required by Cluster Autoscaler to automatically adjust
+// the size of the cluster and create/delete
+// node pools based on the current needs.
+type ClusterAutoscaling struct {
+	// EnableNodeAutoprovisioning: Enables automatic node pool creation and
+	// deletion.
+	EnableNodeAutoprovisioning bool `json:"enableNodeAutoprovisioning,omitempty"`
+
+	// ResourceLimits: Contains global constraints regarding minimum and
+	// maximum
+	// amount of resources in the cluster.
+	ResourceLimits []*ResourceLimit `json:"resourceLimits,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "EnableNodeAutoprovisioning") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "EnableNodeAutoprovisioning") to include in API requests with the
+	// JSON null value. By default, fields with empty values are omitted
+	// from API requests. However, any field with an empty value appearing
+	// in NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ClusterAutoscaling) MarshalJSON() ([]byte, error) {
+	type NoMethod ClusterAutoscaling
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ClusterUpdate: ClusterUpdate describes an update to the cluster.
 // Exactly one update can
 // be applied to a cluster with each request, so at most one field can
@@ -781,6 +888,13 @@ type ClusterUpdate struct {
 	// DesiredAddonsConfig: Configurations for the various addons available
 	// to run in the cluster.
 	DesiredAddonsConfig *AddonsConfig `json:"desiredAddonsConfig,omitempty"`
+
+	// DesiredBinaryAuthorization: The desired configuration options for the
+	// Binary Authorization feature.
+	DesiredBinaryAuthorization *BinaryAuthorization `json:"desiredBinaryAuthorization,omitempty"`
+
+	// DesiredClusterAutoscaling: Cluster-level autoscaling configuration.
+	DesiredClusterAutoscaling *ClusterAutoscaling `json:"desiredClusterAutoscaling,omitempty"`
 
 	// DesiredImageType: The desired image type for the node pool.
 	// NOTE: Set the "desired_node_pool" field as well.
@@ -798,6 +912,17 @@ type ClusterUpdate struct {
 	//
 	// This list must always include the cluster's primary zone.
 	DesiredLocations []string `json:"desiredLocations,omitempty"`
+
+	// DesiredLoggingService: The logging service the cluster should use to
+	// write metrics.
+	// Currently available options:
+	//
+	// * "logging.googleapis.com/kubernetes" - the Google Cloud
+	// Logging
+	// service with Kubernetes-native resource model in Stackdriver
+	// * "logging.googleapis.com" - the Google Cloud Logging service
+	// * "none" - no logs will be exported from the cluster
+	DesiredLoggingService string `json:"desiredLoggingService,omitempty"`
 
 	// DesiredMasterAuthorizedNetworksConfig: The desired configuration
 	// options for master authorized networks feature.
@@ -823,6 +948,9 @@ type ClusterUpdate struct {
 	// use to write metrics.
 	// Currently available options:
 	//
+	// * "monitoring.googleapis.com/kubernetes" - the Google Cloud
+	// Monitoring
+	// service with Kubernetes-native resource model in Stackdriver
 	// * "monitoring.googleapis.com" - the Google Cloud Monitoring service
 	// * "none" - no metrics will be exported from the cluster
 	DesiredMonitoringService string `json:"desiredMonitoringService,omitempty"`
@@ -1001,9 +1129,8 @@ type CreateNodePoolRequest struct {
 
 	// Parent: The parent (project, location, cluster id) where the node
 	// pool will be
-	// created. Specified in the
-	// format
-	// 'projects/*/locations/*/clusters/*/nodePools/*'.
+	// created. Specified in the format
+	// 'projects/*/locations/*/clusters/*'.
 	Parent string `json:"parent,omitempty"`
 
 	// ProjectId: Deprecated. The Google Developers Console [project ID or
@@ -1307,6 +1434,29 @@ type IPAllocationPolicy struct {
 	// subnetwork.
 	SubnetworkName string `json:"subnetworkName,omitempty"`
 
+	// TpuIpv4CidrBlock: The IP address range of the Cloud TPUs in this
+	// cluster. If unspecified, a
+	// range will be automatically chosen with the default size.
+	//
+	// This field is only applicable when `use_ip_aliases` is true.
+	//
+	// If unspecified, the range will use the default size.
+	//
+	// Set to /netmask (e.g. `/14`) to have a range chosen with a
+	// specific
+	// netmask.
+	//
+	// Set to
+	// a
+	// [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+	//
+	// notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks
+	// (e.g.
+	// `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific
+	// range
+	// to use.
+	TpuIpv4CidrBlock string `json:"tpuIpv4CidrBlock,omitempty"`
+
 	// UseIpAliases: Whether alias IPs will be used for pod IPs in the
 	// cluster.
 	UseIpAliases bool `json:"useIpAliases,omitempty"`
@@ -1605,7 +1755,7 @@ func (s *ListUsableSubnetworksResponse) MarshalJSON() ([]byte, error) {
 // for GKE cluster scheduling.
 type Location struct {
 	// Name: Contains the name of the resource requested.
-	// Specific in the format 'projects/*/locations/*'.
+	// Specified in the format 'projects/*/locations/*'.
 	Name string `json:"name,omitempty"`
 
 	// Recommended: Recommended is a bool combining the drain state of the
@@ -1723,8 +1873,10 @@ type MasterAuth struct {
 	ClientCertificate string `json:"clientCertificate,omitempty"`
 
 	// ClientCertificateConfig: Configuration for client certificate
-	// authentication on the cluster.  If no
-	// configuration is specified, a client certificate is issued.
+	// authentication on the cluster. For
+	// clusters before v1.12, if no configuration is specified, a
+	// client
+	// certificate is issued.
 	ClientCertificateConfig *ClientCertificateConfig `json:"clientCertificateConfig,omitempty"`
 
 	// ClientKey: [Output only] Base64-encoded private key used by clients
@@ -1816,19 +1968,102 @@ func (s *MasterAuthorizedNetworksConfig) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// MaxPodsConstraint: Constraints applied to pods.
+type MaxPodsConstraint struct {
+	// MaxPodsPerNode: Constraint enforced on the max num of pods per node.
+	MaxPodsPerNode int64 `json:"maxPodsPerNode,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "MaxPodsPerNode") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "MaxPodsPerNode") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MaxPodsConstraint) MarshalJSON() ([]byte, error) {
+	type NoMethod MaxPodsConstraint
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Metric: Progress metric is (string, int|float|string) pair.
+type Metric struct {
+	// DoubleValue: For metrics with floating point value.
+	DoubleValue float64 `json:"doubleValue,omitempty"`
+
+	// IntValue: For metrics with integer value.
+	IntValue int64 `json:"intValue,omitempty,string"`
+
+	// Name: Metric name, required.
+	// e.g., "nodes total", "percent done"
+	Name string `json:"name,omitempty"`
+
+	// StringValue: For metrics with custom values (ratios, visual progress,
+	// etc.).
+	StringValue string `json:"stringValue,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DoubleValue") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DoubleValue") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Metric) MarshalJSON() ([]byte, error) {
+	type NoMethod Metric
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *Metric) UnmarshalJSON(data []byte) error {
+	type NoMethod Metric
+	var s1 struct {
+		DoubleValue gensupport.JSONFloat64 `json:"doubleValue"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.DoubleValue = float64(s1.DoubleValue)
+	return nil
+}
+
 // NetworkConfig: NetworkConfig reports the relative names of network &
 // subnetwork.
 type NetworkConfig struct {
-	// Network: Output only. The name of the Google Compute
+	// Network: Output only. The relative name of the Google Compute
 	// Engine
-	// network(/compute/docs/networks-and-firewalls#networks).
-	// Example
-	// : projects/my-project/global/networks/my-network
+	// network(/compute/docs/networks-and-firewalls#networks) to which
+	// the cluster is connected.
+	// Example: projects/my-project/global/networks/my-network
 	Network string `json:"network,omitempty"`
 
-	// Subnetwork: Output only. The name of the Google Compute
+	// Subnetwork: Output only. The relative name of the Google Compute
 	// Engine
-	// [subnetwork](/compute/docs/vpc).
+	// [subnetwork](/compute/docs/vpc) to which the cluster is
+	// connected.
 	// Example:
 	// projects/my-project/regions/us-central1/subnetworks/my-subnet
 	Subnetwork string `json:"subnetwork,omitempty"`
@@ -2003,8 +2238,9 @@ type NodeConfig struct {
 	//  "cluster-name"
 	//  "cluster-uid"
 	//  "configure-sh"
-	//  "gci-update-strategy"
+	//  "enable-oslogin"
 	//  "gci-ensure-gke-docker"
+	//  "gci-update-strategy"
 	//  "instance-template"
 	//  "kube-env"
 	//  "startup-script"
@@ -2167,6 +2403,9 @@ type NodePool struct {
 	// only if a valid configuration is present.
 	Autoscaling *NodePoolAutoscaling `json:"autoscaling,omitempty"`
 
+	// Conditions: Which conditions caused the current node pool state.
+	Conditions []*StatusCondition `json:"conditions,omitempty"`
+
 	// Config: The node configuration of the pool.
 	Config *NodeConfig `json:"config,omitempty"`
 
@@ -2188,6 +2427,11 @@ type NodePool struct {
 
 	// Management: NodeManagement configuration for this NodePool.
 	Management *NodeManagement `json:"management,omitempty"`
+
+	// MaxPodsConstraint: The constraint on the maximum number of pods that
+	// can be run
+	// simultaneously on a node in the node pool.
+	MaxPodsConstraint *MaxPodsConstraint `json:"maxPodsConstraint,omitempty"`
 
 	// Name: The name of the node pool.
 	Name string `json:"name,omitempty"`
@@ -2261,6 +2505,9 @@ func (s *NodePool) MarshalJSON() ([]byte, error) {
 // required by cluster autoscaler to
 // adjust the size of the node pool to the current cluster usage.
 type NodePoolAutoscaling struct {
+	// Autoprovisioned: Can this node pool be deleted automatically.
+	Autoprovisioned bool `json:"autoprovisioned,omitempty"`
+
 	// Enabled: Is autoscaling enabled for this node pool.
 	Enabled bool `json:"enabled,omitempty"`
 
@@ -2274,7 +2521,7 @@ type NodePoolAutoscaling struct {
 	// max_node_count.
 	MinNodeCount int64 `json:"minNodeCount,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Enabled") to
+	// ForceSendFields is a list of field names (e.g. "Autoprovisioned") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2282,12 +2529,13 @@ type NodePoolAutoscaling struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Enabled") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "Autoprovisioned") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -2349,6 +2597,9 @@ func (s *NodeTaint) MarshalJSON() ([]byte, error) {
 // have happened or are
 // happening on the cluster. All fields are output only.
 type Operation struct {
+	// ClusterConditions: Which conditions caused the current cluster state.
+	ClusterConditions []*StatusCondition `json:"clusterConditions,omitempty"`
+
 	// Detail: Detailed operation progress, if available.
 	Detail string `json:"detail,omitempty"`
 
@@ -2368,6 +2619,10 @@ type Operation struct {
 
 	// Name: The server-assigned ID for the operation.
 	Name string `json:"name,omitempty"`
+
+	// NodepoolConditions: Which conditions caused the current node pool
+	// state.
+	NodepoolConditions []*StatusCondition `json:"nodepoolConditions,omitempty"`
 
 	// OperationType: The operation type.
 	//
@@ -2390,6 +2645,9 @@ type Operation struct {
 	//   "SET_NETWORK_POLICY" - Updates network policy for a cluster.
 	//   "SET_MAINTENANCE_POLICY" - Set the maintenance policy.
 	OperationType string `json:"operationType,omitempty"`
+
+	// Progress: [Output only] Progress information for an operation.
+	Progress *OperationProgress `json:"progress,omitempty"`
 
 	// SelfLink: Server-defined URL for the resource.
 	SelfLink string `json:"selfLink,omitempty"`
@@ -2427,7 +2685,60 @@ type Operation struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "Detail") to
+	// ForceSendFields is a list of field names (e.g. "ClusterConditions")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ClusterConditions") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Operation) MarshalJSON() ([]byte, error) {
+	type NoMethod Operation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// OperationProgress: Information about operation (or operation stage)
+// progress.
+type OperationProgress struct {
+	// Metrics: Progress metric bundle, for example:
+	//   metrics: [{name: "nodes done",     int_value: 15},
+	//             {name: "nodes total",    int_value: 32}]
+	// or
+	//   metrics: [{name: "progress",       double_value: 0.56},
+	//             {name: "progress scale", double_value: 1.0}]
+	Metrics []*Metric `json:"metrics,omitempty"`
+
+	// Name: A non-parameterized string describing an operation stage.
+	// Unset for single-stage operations.
+	Name string `json:"name,omitempty"`
+
+	// Stages: Substages of an operation or a stage.
+	Stages []*OperationProgress `json:"stages,omitempty"`
+
+	// Status: Status of an operation stage.
+	// Unset for single-stage operations.
+	//
+	// Possible values:
+	//   "STATUS_UNSPECIFIED" - Not set.
+	//   "PENDING" - The operation has been created.
+	//   "RUNNING" - The operation is currently running.
+	//   "DONE" - The operation is done, either cancelled or completed.
+	//   "ABORTING" - The operation is aborting.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Metrics") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2435,8 +2746,8 @@ type Operation struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Detail") to include in API
-	// requests with the JSON null value. By default, fields with empty
+	// NullFields is a list of field names (e.g. "Metrics") to include in
+	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
@@ -2444,8 +2755,8 @@ type Operation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Operation) MarshalJSON() ([]byte, error) {
-	type NoMethod Operation
+func (s *OperationProgress) MarshalJSON() ([]byte, error) {
+	type NoMethod OperationProgress
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2477,6 +2788,93 @@ type PodSecurityPolicyConfig struct {
 
 func (s *PodSecurityPolicyConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod PodSecurityPolicyConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// PrivateClusterConfig: Configuration options for private clusters.
+type PrivateClusterConfig struct {
+	// EnablePrivateEndpoint: Whether the master's internal IP address is
+	// used as the cluster endpoint.
+	EnablePrivateEndpoint bool `json:"enablePrivateEndpoint,omitempty"`
+
+	// EnablePrivateNodes: Whether nodes have only private IP addresses, and
+	// communicate with the
+	// master via private networking.
+	EnablePrivateNodes bool `json:"enablePrivateNodes,omitempty"`
+
+	// MasterIpv4CidrBlock: The IP prefix in CIDR notation to use for the
+	// hosted master network. This
+	// prefix will be used for assigning private IP addresses to the master
+	// or
+	// set of masters, as well as the ILB VIP.
+	MasterIpv4CidrBlock string `json:"masterIpv4CidrBlock,omitempty"`
+
+	// PrivateEndpoint: Output only. The internal IP address of this
+	// cluster's master endpoint.
+	PrivateEndpoint string `json:"privateEndpoint,omitempty"`
+
+	// PublicEndpoint: Output only. The external IP address of this
+	// cluster's master endpoint.
+	PublicEndpoint string `json:"publicEndpoint,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "EnablePrivateEndpoint") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EnablePrivateEndpoint") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *PrivateClusterConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod PrivateClusterConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ResourceLimit: Contains information about amount of some resource in
+// the cluster.
+// For memory, value should be in GB.
+type ResourceLimit struct {
+	// Maximum: Maximum amount of the resource in the cluster.
+	Maximum int64 `json:"maximum,omitempty,string"`
+
+	// Minimum: Minimum amount of the resource in the cluster.
+	Minimum int64 `json:"minimum,omitempty,string"`
+
+	// ResourceType: Resource name "cpu", "memory" or gpu-specific string.
+	ResourceType string `json:"resourceType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Maximum") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Maximum") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ResourceLimit) MarshalJSON() ([]byte, error) {
+	type NoMethod ResourceLimit
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3350,6 +3748,47 @@ func (s *StartIPRotationRequest) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// StatusCondition: StatusCondition describes why a cluster or a node
+// pool has a certain status
+// (e.g., ERROR or DEGRADED).
+type StatusCondition struct {
+	// Code: Machine-friendly representation of the condition
+	//
+	// Possible values:
+	//   "UNKNOWN" - UNKNOWN indicates a generic condition.
+	//   "GCE_STOCKOUT" - GCE_STOCKOUT indicates a GCE stockout.
+	//   "GKE_SERVICE_ACCOUNT_DELETED" - GKE_SERVICE_ACCOUNT_DELETED
+	// indicates that the user deleted their robot
+	// service account.
+	// More codes TBA
+	Code string `json:"code,omitempty"`
+
+	// Message: Human-friendly representation of the condition
+	Message string `json:"message,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Code") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Code") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *StatusCondition) MarshalJSON() ([]byte, error) {
+	type NoMethod StatusCondition
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // UpdateClusterRequest: UpdateClusterRequest updates the settings of a
 // cluster.
 type UpdateClusterRequest struct {
@@ -3554,6 +3993,18 @@ type UsableSubnetwork struct {
 	// Example: projects/my-project/global/networks/my-network
 	Network string `json:"network,omitempty"`
 
+	// SecondaryIpRanges: Secondary IP ranges.
+	SecondaryIpRanges []*UsableSubnetworkSecondaryRange `json:"secondaryIpRanges,omitempty"`
+
+	// StatusMessage: A human readable status message representing the
+	// reasons for cases where
+	// the caller cannot use the secondary ranges under the subnet. For
+	// example if
+	// the secondary_ip_ranges is empty due to a permission issue, an
+	// insufficient
+	// permission message will be given by status_message.
+	StatusMessage string `json:"statusMessage,omitempty"`
+
 	// Subnetwork: Subnetwork Name.
 	// Example:
 	// projects/my-project/regions/us-central1/subnetworks/my-subnet
@@ -3578,6 +4029,62 @@ type UsableSubnetwork struct {
 
 func (s *UsableSubnetwork) MarshalJSON() ([]byte, error) {
 	type NoMethod UsableSubnetwork
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// UsableSubnetworkSecondaryRange: Secondary IP range of a usable
+// subnetwork.
+type UsableSubnetworkSecondaryRange struct {
+	// IpCidrRange: The range of IP addresses belonging to this subnetwork
+	// secondary range.
+	IpCidrRange string `json:"ipCidrRange,omitempty"`
+
+	// RangeName: The name associated with this subnetwork secondary range,
+	// used when adding
+	// an alias IP range to a VM instance.
+	RangeName string `json:"rangeName,omitempty"`
+
+	// Status: This field is to determine the status of the secondary range
+	// programmably.
+	//
+	// Possible values:
+	//   "UNKNOWN" - UNKNOWN is the zero value of the Status enum. It's not
+	// a valid status.
+	//   "UNUSED" - UNUSED denotes that this range is unclaimed by any
+	// cluster.
+	//   "IN_USE_SERVICE" - IN_USE_SERVICE denotes that this range is
+	// claimed by a cluster for
+	// services. It cannot be used for other clusters.
+	//   "IN_USE_SHAREABLE_POD" - IN_USE_SHAREABLE_POD denotes this range
+	// was created by the network admin
+	// and is currently claimed by a cluster for pods. It can only be used
+	// by
+	// other clusters as a pod range.
+	//   "IN_USE_MANAGED_POD" - IN_USE_MANAGED_POD denotes this range was
+	// created by GKE and is claimed
+	// for pods. It cannot be used for other clusters.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "IpCidrRange") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IpCidrRange") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UsableSubnetworkSecondaryRange) MarshalJSON() ([]byte, error) {
+	type NoMethod UsableSubnetworkSecondaryRange
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3728,6 +4235,7 @@ func (c *ProjectsAggregatedUsableSubnetworksListCall) doRequest(alt string) (*ht
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/aggregated/usableSubnetworks")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -3925,6 +4433,7 @@ func (c *ProjectsLocationsGetServerConfigCall) doRequest(alt string) (*http.Resp
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}/serverConfig")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -4074,6 +4583,7 @@ func (c *ProjectsLocationsListCall) doRequest(alt string) (*http.Response, error
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/locations")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -4131,7 +4641,7 @@ func (c *ProjectsLocationsListCall) Do(opts ...googleapi.CallOption) (*ListLocat
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "Contains the name of the resource requested.\nSpecific in the format 'projects/*/locations'.",
+	//       "description": "Contains the name of the resource requested.\nSpecified in the format 'projects/*'.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -4206,6 +4716,7 @@ func (c *ProjectsLocationsClustersCompleteIpRotationCall) doRequest(alt string) 
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:completeIpRotation")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -4357,6 +4868,7 @@ func (c *ProjectsLocationsClustersCreateCall) doRequest(alt string) (*http.Respo
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/clusters")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -4526,6 +5038,7 @@ func (c *ProjectsLocationsClustersDeleteCall) doRequest(alt string) (*http.Respo
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
@@ -4710,6 +5223,7 @@ func (c *ProjectsLocationsClustersGetCall) doRequest(alt string) (*http.Response
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -4887,6 +5401,7 @@ func (c *ProjectsLocationsClustersListCall) doRequest(alt string) (*http.Respons
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/clusters")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -5029,6 +5544,7 @@ func (c *ProjectsLocationsClustersSetAddonsCall) doRequest(alt string) (*http.Re
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setAddons")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5165,6 +5681,7 @@ func (c *ProjectsLocationsClustersSetLegacyAbacCall) doRequest(alt string) (*htt
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setLegacyAbac")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5300,6 +5817,7 @@ func (c *ProjectsLocationsClustersSetLocationsCall) doRequest(alt string) (*http
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setLocations")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5435,6 +5953,7 @@ func (c *ProjectsLocationsClustersSetLoggingCall) doRequest(alt string) (*http.R
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setLogging")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5570,6 +6089,7 @@ func (c *ProjectsLocationsClustersSetMaintenancePolicyCall) doRequest(alt string
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setMaintenancePolicy")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5709,6 +6229,7 @@ func (c *ProjectsLocationsClustersSetMasterAuthCall) doRequest(alt string) (*htt
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setMasterAuth")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5844,6 +6365,7 @@ func (c *ProjectsLocationsClustersSetMonitoringCall) doRequest(alt string) (*htt
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setMonitoring")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -5979,6 +6501,7 @@ func (c *ProjectsLocationsClustersSetNetworkPolicyCall) doRequest(alt string) (*
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setNetworkPolicy")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -6114,6 +6637,7 @@ func (c *ProjectsLocationsClustersSetResourceLabelsCall) doRequest(alt string) (
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setResourceLabels")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -6249,6 +6773,7 @@ func (c *ProjectsLocationsClustersStartIpRotationCall) doRequest(alt string) (*h
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:startIpRotation")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -6384,6 +6909,7 @@ func (c *ProjectsLocationsClustersUpdateCall) doRequest(alt string) (*http.Respo
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
@@ -6519,6 +7045,7 @@ func (c *ProjectsLocationsClustersUpdateMasterCall) doRequest(alt string) (*http
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:updateMaster")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -6654,6 +7181,7 @@ func (c *ProjectsLocationsClustersNodePoolsCreateCall) doRequest(alt string) (*h
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/nodePools")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -6711,7 +7239,7 @@ func (c *ProjectsLocationsClustersNodePoolsCreateCall) Do(opts ...googleapi.Call
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The parent (project, location, cluster id) where the node pool will be\ncreated. Specified in the format\n'projects/*/locations/*/clusters/*/nodePools/*'.",
+	//       "description": "The parent (project, location, cluster id) where the node pool will be\ncreated. Specified in the format\n'projects/*/locations/*/clusters/*'.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/clusters/[^/]+$",
 	//       "required": true,
@@ -6820,6 +7348,7 @@ func (c *ProjectsLocationsClustersNodePoolsDeleteCall) doRequest(alt string) (*h
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
@@ -7017,6 +7546,7 @@ func (c *ProjectsLocationsClustersNodePoolsGetCall) doRequest(alt string) (*http
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -7206,6 +7736,7 @@ func (c *ProjectsLocationsClustersNodePoolsListCall) doRequest(alt string) (*htt
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/nodePools")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -7355,6 +7886,7 @@ func (c *ProjectsLocationsClustersNodePoolsRollbackCall) doRequest(alt string) (
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:rollback")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -7491,6 +8023,7 @@ func (c *ProjectsLocationsClustersNodePoolsSetAutoscalingCall) doRequest(alt str
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setAutoscaling")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -7626,6 +8159,7 @@ func (c *ProjectsLocationsClustersNodePoolsSetManagementCall) doRequest(alt stri
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setManagement")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -7761,6 +8295,7 @@ func (c *ProjectsLocationsClustersNodePoolsSetSizeCall) doRequest(alt string) (*
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setSize")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -7897,6 +8432,7 @@ func (c *ProjectsLocationsClustersNodePoolsUpdateCall) doRequest(alt string) (*h
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
@@ -8032,6 +8568,7 @@ func (c *ProjectsLocationsOperationsCancelCall) doRequest(alt string) (*http.Res
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:cancel")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -8204,6 +8741,7 @@ func (c *ProjectsLocationsOperationsGetCall) doRequest(alt string) (*http.Respon
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -8381,6 +8919,7 @@ func (c *ProjectsLocationsOperationsListCall) doRequest(alt string) (*http.Respo
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/operations")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -8541,6 +9080,7 @@ func (c *ProjectsZonesGetServerconfigCall) doRequest(alt string) (*http.Response
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/serverconfig")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -8689,6 +9229,7 @@ func (c *ProjectsZonesClustersAddonsCall) doRequest(alt string) (*http.Response,
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/addons")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -8843,6 +9384,7 @@ func (c *ProjectsZonesClustersCompleteIpRotationCall) doRequest(alt string) (*ht
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -9011,6 +9553,7 @@ func (c *ProjectsZonesClustersCreateCall) doRequest(alt string) (*http.Response,
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -9169,6 +9712,7 @@ func (c *ProjectsZonesClustersDeleteCall) doRequest(alt string) (*http.Response,
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
@@ -9340,6 +9884,7 @@ func (c *ProjectsZonesClustersGetCall) doRequest(alt string) (*http.Response, er
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -9497,6 +10042,7 @@ func (c *ProjectsZonesClustersLegacyAbacCall) doRequest(alt string) (*http.Respo
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/legacyAbac")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -9667,6 +10213,7 @@ func (c *ProjectsZonesClustersListCall) doRequest(alt string) (*http.Response, e
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -9815,6 +10362,7 @@ func (c *ProjectsZonesClustersLocationsCall) doRequest(alt string) (*http.Respon
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -9969,6 +10517,7 @@ func (c *ProjectsZonesClustersLoggingCall) doRequest(alt string) (*http.Response
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/logging")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10123,6 +10672,7 @@ func (c *ProjectsZonesClustersMasterCall) doRequest(alt string) (*http.Response,
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/master")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10277,6 +10827,7 @@ func (c *ProjectsZonesClustersMonitoringCall) doRequest(alt string) (*http.Respo
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/monitoring")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10431,6 +10982,7 @@ func (c *ProjectsZonesClustersResourceLabelsCall) doRequest(alt string) (*http.R
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/resourceLabels")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10585,6 +11137,7 @@ func (c *ProjectsZonesClustersSetMaintenancePolicyCall) doRequest(alt string) (*
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setMaintenancePolicy")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10743,6 +11296,7 @@ func (c *ProjectsZonesClustersSetMasterAuthCall) doRequest(alt string) (*http.Re
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setMasterAuth")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -10897,6 +11451,7 @@ func (c *ProjectsZonesClustersSetNetworkPolicyCall) doRequest(alt string) (*http
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setNetworkPolicy")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -11051,6 +11606,7 @@ func (c *ProjectsZonesClustersStartIpRotationCall) doRequest(alt string) (*http.
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -11205,6 +11761,7 @@ func (c *ProjectsZonesClustersUpdateCall) doRequest(alt string) (*http.Response,
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
@@ -11361,6 +11918,7 @@ func (c *ProjectsZonesClustersNodePoolsAutoscalingCall) doRequest(alt string) (*
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -11523,6 +12081,7 @@ func (c *ProjectsZonesClustersNodePoolsCreateCall) doRequest(alt string) (*http.
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -11682,6 +12241,7 @@ func (c *ProjectsZonesClustersNodePoolsDeleteCall) doRequest(alt string) (*http.
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
@@ -11865,6 +12425,7 @@ func (c *ProjectsZonesClustersNodePoolsGetCall) doRequest(alt string) (*http.Res
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -12044,6 +12605,7 @@ func (c *ProjectsZonesClustersNodePoolsListCall) doRequest(alt string) (*http.Re
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -12204,6 +12766,7 @@ func (c *ProjectsZonesClustersNodePoolsRollbackCall) doRequest(alt string) (*htt
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}:rollback")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -12368,6 +12931,7 @@ func (c *ProjectsZonesClustersNodePoolsSetManagementCall) doRequest(alt string) 
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setManagement")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -12532,6 +13096,7 @@ func (c *ProjectsZonesClustersNodePoolsSetSizeCall) doRequest(alt string) (*http
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -12697,6 +13262,7 @@ func (c *ProjectsZonesClustersNodePoolsUpdateCall) doRequest(alt string) (*http.
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/update")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -12859,6 +13425,7 @@ func (c *ProjectsZonesOperationsCancelCall) doRequest(alt string) (*http.Respons
 	}
 	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/operations/{operationId}:cancel")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
@@ -13028,6 +13595,7 @@ func (c *ProjectsZonesOperationsGetCall) doRequest(alt string) (*http.Response, 
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/operations/{operationId}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
@@ -13199,6 +13767,7 @@ func (c *ProjectsZonesOperationsListCall) doRequest(alt string) (*http.Response,
 	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
 	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/projects/{projectId}/zones/{zone}/operations")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)

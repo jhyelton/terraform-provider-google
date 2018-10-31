@@ -25,6 +25,7 @@ description: |-
 Represents a TargetHttpProxy resource, which is used by one or more global
 forwarding rule to route incoming HTTP requests to a URL map.
 
+
 To get more information about TargetHttpProxy, see:
 
 * [API documentation](https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies)
@@ -36,14 +37,11 @@ To get more information about TargetHttpProxy, see:
 ```hcl
 resource "google_compute_target_http_proxy" "default" {
   name        = "test-proxy"
-  description = "a description"
   url_map     = "${google_compute_url_map.default.self_link}"
 }
 
 resource "google_compute_url_map" "default" {
   name        = "url-map"
-  description = "a description"
-
   default_service = "${google_compute_backend_service.default.self_link}"
 
   host_rule {
@@ -63,7 +61,7 @@ resource "google_compute_url_map" "default" {
 }
 
 resource "google_compute_backend_service" "default" {
-  name        = "default-backend"
+  name        = "backend-service"
   port_name   = "http"
   protocol    = "HTTP"
   timeout_sec = 10
@@ -72,7 +70,7 @@ resource "google_compute_backend_service" "default" {
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "test"
+  name               = "http-health-check"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1
@@ -83,6 +81,7 @@ resource "google_compute_http_health_check" "default" {
 
 The following arguments are supported:
 
+
 * `name` -
   (Required)
   Name of the resource. Provided by the client when the resource is
@@ -92,6 +91,7 @@ The following arguments are supported:
   first character must be a lowercase letter, and all following
   characters must be a dash, lowercase letter, or digit, except the last
   character, which cannot be a dash.
+
 * `url_map` -
   (Required)
   A reference to the UrlMap resource that defines the mapping from URL
@@ -100,10 +100,11 @@ The following arguments are supported:
 
 - - -
 
+
 * `description` -
   (Optional)
   An optional description of this resource.
-* `project` (Optional) The ID of the project in which the resource belongs.
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
 
@@ -111,8 +112,10 @@ The following arguments are supported:
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
+
 * `creation_timestamp` -
   Creation timestamp in RFC3339 text format.
+
 * `proxy_id` -
   The unique identifier for the resource.
 * `self_link` - The URI of the created resource.
